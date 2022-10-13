@@ -4,6 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
+import { upload } from './upload';
 
 dotenv.config();
 
@@ -36,6 +37,10 @@ app.use(bodyParser.json());
 
 app.get('/', async (req: Request, res: Response) => {
   res.send(200);
+});
+
+app.post('/upload', upload.single('image'), async (req, res) => {
+  res.send({ url: (req.file as any).location });
 });
 
 const PORT = 4000;
