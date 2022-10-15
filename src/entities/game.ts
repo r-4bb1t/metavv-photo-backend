@@ -53,11 +53,11 @@ export class Comment {
   @Column('text')
   name!: string;
 
-  @ManyToOne(() => Comment, (comment) => comment.childrenComment)
-  parentComment: Comment;
+  @ManyToOne(() => Comment, (comment) => comment.childrenComment, { nullable: true })
+  parentComment!: Comment;
 
-  @OneToMany(() => Comment, (comment) => comment.parentComment)
-  childrenComment: Comment[];
+  @OneToMany(() => Comment, (comment) => comment.parentComment, { nullable: true })
+  childrenComment!: Comment[];
 
   @Column('boolean')
   isCreator!: boolean;
