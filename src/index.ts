@@ -100,3 +100,21 @@ try {
 } catch (error: any) {
   console.error(`Error occured: ${error.message}`);
 }
+
+app.post('/new', async (req: Request, res: Response) => {
+  try {
+    const game = await AppDataSource.getRepository(Game).create({
+      title: req.body.title,
+      standard: req.body.standard,
+      isPublic: req.body.isPublic,
+      tags: req.body.tags,
+      password: req.body.password,
+      photos: req.body.photos
+    });
+    const result = await AppDataSource.getRepository(Game).save(game);
+
+    return res.send(result);
+  } catch (e) {
+    console.log(e);
+  }
+});
