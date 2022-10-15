@@ -66,7 +66,7 @@ app.post('/new', upload.array('files'), async (req: Request, res: Response) => {
       }),
     );
 
-    return res.send(result);
+    return res.send({ url: result.id });
   } catch (e) {
     console.log(e);
   }
@@ -105,7 +105,7 @@ app.post('/:photoId/comment', async (req: Request, res: Response) => {
   try {
     const photo = await AppDataSource.getRepository(Photo)
       .createQueryBuilder('photo')
-      .where('photo.id == :id', { id: `%${req.params.photoId}%` })
+      .where('photo.id = :id', { id: req.params.photoId })
       // .leftJoinAndSelect('photo.comments', 'comments')
       .getOneOrFail();
 
