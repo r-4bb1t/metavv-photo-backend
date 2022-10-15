@@ -78,10 +78,11 @@ app.post('/new', upload.array('files'), async (req: Request, res: Response) => {
     return res.send({ url: result.id });
   } catch (e) {
     console.log(e);
+    return res.send(400).json({ message: e });
   }
 });
 
-app.get('/game/:gameId/result', async (req: Request, res: Response) => {
+app.get('/:gameId/result', async (req: Request, res: Response) => {
   try {
     const game = await AppDataSource.getRepository(Game)
       .createQueryBuilder('game')
@@ -107,6 +108,7 @@ app.get('/game/:gameId/result', async (req: Request, res: Response) => {
     });
   } catch (e) {
     console.log(e);
+    return res.send(400).json({ message: e });
   }
 });
 
@@ -125,6 +127,7 @@ app.post('/:photoId/comment', async (req: Request, res: Response) => {
     return res.send(result);
   } catch (e) {
     console.log(e);
+    return res.send(400).json({ message: e });
   }
 });
 
@@ -171,6 +174,7 @@ app.post('/:gameId', async (req: Request, res: Response) => {
     });
   } catch (e) {
     console.log(e);
+    return res.send(400).json({ message: e });
   }
 });
 

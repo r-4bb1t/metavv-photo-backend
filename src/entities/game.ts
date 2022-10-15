@@ -11,7 +11,7 @@ export class Game {
   @Column('text')
   standard!: string;
 
-  @Column('text')
+  @Column('text', { array: true })
   tags!: string[];
 
   @Column('int')
