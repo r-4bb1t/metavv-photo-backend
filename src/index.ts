@@ -72,34 +72,72 @@ app.post('/new', upload.array('files'), async (req: Request, res: Response) => {
   }
 });
 
-app.get('/game/:gameId/result', async (req: Request, res: Response) => {
+app.get('/game/:gameId/result', async(req: Request, res: Response) => {
   try {
     const game = await AppDataSource.getRepository(Game)
-      .createQueryBuilder('game')
-      .where('game.id == :id', { id: req.params.gameId })
-      .andWhere('game.password == :password', { password: req.query.password })
-      .leftJoinAndSelect('game.photos', 'photos')
-      .getOne();
+        .createQueryBuilder('game')
+        .where('game.id == :id', { id: req.params.gameId})
+        .andWhere('game.password == :password', { password: req.query.password})
+        .leftJoinAndSelect('game.photos', 'photos')
+        .getOne();
 
     if (!game) return res.send(404);
-
+    
     return res.send({
-      photos: game.photos.map((photo) => {
-        return {
-          score: photo.score,
-          comment: photo.comments.map((comment) => {
+        photos: game.photos.map((photo) => {
             return {
-              content: comment.content,
-              name: comment.name,
+                score: photo.score,
+                comment: photo.comments.map((comment) => {
+                  return {
+                    content: comment.content,
+                    name: comment.name,
+                  };
+                }),
             };
-          }),
-        };
-      }),
+        }),
     });
-  } catch (e) {
+} catch (e) {
     console.log(e);
+}
+});
+
+app.post('/:photoId/comment', async (req: Request, res: Response) => {
+  try{
+
+    const photo = await AppDataSource.getRepository(Photo)
+        .createQueryBuilder('photo')
+        .where('photo.id == :id', { id: `%${req.params.photoId}%` })
+        // .leftJoinAndSelect('photo.comments', 'comments')
+        .getOneOrFail();
+
+    const comment = await AppDataSource.getRepository(Comment).create(req.body as Comment)
+    comment.photo = photo;
+    const result = await AppDataSource.getRepository(Comment).save(comment)
+    
+  return res.send(comment)
+  } catch (e) {
+    console.log(e)
   }
 });
+
+
+
+
+
+    // const comment = await AppDataSource.getRepository(Comment)
+    // .createQueryBuilder('photo')
+    // .where('photo.id == id', {id: req.params.photoId})
+    // .leftJoinAndSelect('photo.comment', 'comment')
+    // .getOne()
+
+        // .createQueryBuilder('comment')
+        // .where('comment.id like :id', {id: `%${req.params.id}%`})
+        // .andWhere ('comment.content like :content', {content: `%${req.body.content}%`})
+        // .andWhere ('comment.name like :name', {name: `%${req.body.name}%`})
+        // .andWhere ('comment.parentComment like :parentComment', {parentComment: `%${req.body.parentComment}%`})
+        // .andWhere ('comment.childrenComment like :childrenComment', {childrenComment: `%${req.body.childrenComment}%`})
+        // .andWhere ('comment.isCreator like :isCreator', {isCreator: `%${req.body.isCreator}%`})
+        // .andWhere ('comment.onlyCreator like :onlyCreator', {onlyCreator: `%${req.body.isCreator}%`})
 
 //게임 참여
 app.post('/:gameId', async (req: Request, res: Response) => {
