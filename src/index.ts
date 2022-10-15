@@ -87,7 +87,7 @@ app.post('/:gameId', async (req: Request, res: Response) => {
     if (!game) return res.send(404);
     if (game){
       for (let i = 0; i < game.photos.length; i++)
-        {game.photo.score += req.body.photos[i]
+        {Object.keys(req.body.photos).map((photoId)=>game.photos.filter((p)=>p.id===photoId)[0].score += req.body.photos[photoId].score)
       }
     
       return res.send({
