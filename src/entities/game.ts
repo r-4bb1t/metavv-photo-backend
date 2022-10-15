@@ -30,14 +30,8 @@ export class Photo {
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
-  //   @Column('blob') //blob: Binary Large Object, 텍스트나 바이너리 데이터, 이미지로 바꿀 수 있음
-  //   image!: Buffer; //MySQL의 경우 blob 칼럼 지원
-
-  //   @Column('text') //이미지 링크만 있으면 되는 경우
-  //   imgLink!: string;
-
-  @Column('file')
-  image!: File;
+  @Column('text')
+  img!: string;
 
   @Column('int')
   score!: number;
@@ -60,11 +54,11 @@ export class Comment {
   @Column('text')
   name!: string;
 
-  @Column({ nullable: true, type: 'int' }) //아니면 Comment 엔티티 자체를 저장할 수도?
-  parentCommentId: number;
+  @ManyToOne(() => Comment, (comment) => comment.childrenComment)
+  parentComment: Comment;
 
-  @Column({ nullable: true, type: 'int' }) //아니면 Comment 엔티티 자체를 저장할 수도?
-  childrenCommentId: number;
+  @OneToMany(() => Comment, (comment) => comment.parentComment)
+  childrenComment: Comment;
 
   @Column('boolean')
   isCreator!: boolean;
