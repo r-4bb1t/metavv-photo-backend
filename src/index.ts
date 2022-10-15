@@ -36,8 +36,17 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.get('/', async (req: Request, res: Response) => {
-  res.send(200);
+app.get('/:gameId', async (req: Request, res: Response) => {
+  const game = await AppDataSource.getRepository(Game)
+    .createQueryBuilder('game')
+    .where('game.id = :gameId', { gameId: req.params.gameId })
+    .leftJoinAndSelect('game.photos', 'photos')
+    .leftJoinAndSelect('photos.comments', 'comments')
+    .getOne();
+
+  if (!game) return res.send(404);
+
+  return res.json(game);
 });
 
 app.post('/new', upload.array('files'), async (req: Request, res: Response) => {
