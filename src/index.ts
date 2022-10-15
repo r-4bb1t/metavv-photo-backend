@@ -134,15 +134,6 @@ app.post('/:photoId/comment', async (req: Request, res: Response) => {
 //게임 참여
 app.post('/:gameId', async (req: Request, res: Response) => {
   try {
-    const game = await AppDataSource.getRepository(Game)
-      .createQueryBuilder('game')
-      .where('game.id = :gameId', { gameId: req.params.gameId })
-      .leftJoinAndSelect('game.photos', 'photos')
-      .leftJoinAndSelect('photos.comments', 'comments')
-      .getOne();
-
-    if (!game) return res.send(404);
-
     await Promise.all(
       Object.keys(req.body.photos).map(async (photoId) => {
         try {
@@ -157,6 +148,13 @@ app.post('/:gameId', async (req: Request, res: Response) => {
         }
       }),
     );
+
+    const game = await AppDataSource.getRepository(Game)
+      .createQueryBuilder('game')
+      .where('game.id = :gameId', { gameId: req.params.gameId })
+      .leftJoinAndSelect('game.photos', 'photos')
+      .leftJoinAndSelect('photos.comments', 'comments')
+      .getOneOrFail();
 
     return res.send({
       photos: game.photos.map((photo) => {
