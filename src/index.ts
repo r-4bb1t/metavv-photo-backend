@@ -6,6 +6,7 @@ import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { upload } from './upload';
 import { Game, Photo, Comment } from './entities/game';
+import multerS3 from 'multer-s3';
 
 dotenv.config();
 
@@ -40,38 +41,33 @@ app.get('/', async (req: Request, res: Response) => {
   res.send(200);
 });
 
-
-app.get('/game/:gameId/result', async(req: Request, res: Response) => {
+app.get('/game/:gameId/result', async (req: Request, res: Response) => {
   try {
     const game = await AppDataSource.getRepository(Game)
-        .createQueryBuilder('game')
-        .where('game.id == :id', { id: req.params.gameId})
-        .andWhere('game.password == :password', { password: req.query.password})
-        .leftJoinAndSelect('game.photos', 'photos')
-        .getOne();
+      .createQueryBuilder('game')
+      .where('game.id == :id', { id: req.params.gameId })
+      .andWhere('game.password == :password', { password: req.query.password })
+      .leftJoinAndSelect('game.photos', 'photos')
+      .getOne();
 
     if (!game) return res.send(404);
-    
-    return res.send({
-        photos: game.photos.map((photo) => {
-            return {
-                score: photo.score,
-                comment: photo.comments.map((comment) => {
-                  return {
-                    content: comment.content,
-                    name: comment.name,
-                  };
-                }),
-            };
-        }),
-    });
-} catch (e) {
-    console.log(e);
-}
-});
 
-app.post('/upload', upload.single('image'), async (req, res) => {
-  res.send({ url: (req.file as any).location });
+    return res.send({
+      photos: game.photos.map((photo) => {
+        return {
+          score: photo.score,
+          comment: photo.comments.map((comment) => {
+            return {
+              content: comment.content,
+              name: comment.name,
+            };
+          }),
+        };
+      }),
+    });
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 //게임 참여
@@ -101,7 +97,7 @@ try {
   console.error(`Error occured: ${error.message}`);
 }
 
-app.post('/new', async (req: Request, res: Response) => {
+app.post('/new', upload.array('image'), async (req: Request, res: Response) => {
   try {
     const game = await AppDataSource.getRepository(Game).create({
       title: req.body.title,
@@ -109,9 +105,22 @@ app.post('/new', async (req: Request, res: Response) => {
       isPublic: req.body.isPublic,
       tags: req.body.tags,
       password: req.body.password,
-      photos: req.body.photos
     });
     const result = await AppDataSource.getRepository(Game).save(game);
+
+    const urls = (req.files as Express.MulterS3.File[])?.map((file) => file.location);
+
+    await Promise.all(
+      urls.map(async (url: string) => {
+        const p = await AppDataSource.getRepository(Photo).create({
+          game: result,
+          img: url,
+          score: 0,
+          comments: [],
+        });
+        await AppDataSource.getRepository(Photo).save(p);
+      }),
+    );
 
     return res.send(result);
   } catch (e) {
