@@ -78,17 +78,42 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 app.post('/:gameId', async (req: Request, res: Response) => {
   try {
     //대충 req.body.name으로 유저 찾기
-
     const game = await AppDataSource.getRepository(Game)
       .createQueryBuilder('game')
       .where('game.id = :gameId', { gameId: req.params.gameId })
       .leftJoinAndSelect('game.photos', 'photos')
       .getOne();
+
     if (!game) return res.send(404);
-    if (game.photos.length) for (let i = 0; i < game.photos.length; i++) {}
-  } catch (e) {
+    if (game){
+      for (let i = 0; i < game.photos.length; i++)
+        {game.photo.score += req.body.photos[i]
+      }
+    
+      return res.send({
+        photos: game.photos.map((photo) => {
+            return {
+                score: photo.score,
+                comment: photo.comments.map((comment) => {
+                  return {
+                    content: comment.content,
+                    name: comment.name,
+                  };
+                }),
+            };
+        }),
+    });}
+  } catch (e){
     console.log(e);
   }
+
+  
+  // reqest 배열 형태{[photo :1] : 10(점), [2] : 8, [3] : 2, [4] : 5......} 
+  Object.keys(req.body.photos).map((photoId)=>{ 
+    req.body.photos[photoId]
+})
+
+
 });
 
 const PORT = 4000;
