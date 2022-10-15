@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { upload } from './upload';
-import { Game, Photo } from './game';
+import { Game, Photo, Comment } from './entities/game';
 
 dotenv.config();
 
@@ -40,8 +40,55 @@ app.get('/', async (req: Request, res: Response) => {
   res.send(200);
 });
 
+
+app.get('/game/:gameId/result', async(req: Request, res: Response) => {
+  try {
+    const game = await AppDataSource.getRepository(Game)
+        .createQueryBuilder('game')
+        .where('game.id == :id', { id: req.params.gameId})
+        .andWhere('game.password == :password', { password: req.query.password})
+        .leftJoinAndSelect('game.photos', 'photos')
+        .getOne();
+
+    if (!game) return res.send(404);
+    
+    return res.send({
+        photos: game.photos.map((photo) => {
+            return {
+                score: photo.score,
+                comment: photo.comments.map((comment) => {
+                  return {
+                    content: comment.content,
+                    name: comment.name,
+                  };
+                }),
+            };
+        }),
+    });
+} catch (e) {
+    console.log(e);
+}
+});
+
 app.post('/upload', upload.single('image'), async (req, res) => {
   res.send({ url: (req.file as any).location });
+});
+
+//게임 참여
+app.post('/:gameId', async (req: Request, res: Response) => {
+  try {
+    //대충 req.body.name으로 유저 찾기
+
+    const game = await AppDataSource.getRepository(Game)
+      .createQueryBuilder('game')
+      .where('game.id = :gameId', { gameId: req.params.gameId })
+      .leftJoinAndSelect('game.photos', 'photos')
+      .getOne();
+    if (!game) return res.send(404);
+    if (game.photos.length) for (let i = 0; i < game.photos.length; i++) {}
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 const PORT = 4000;
