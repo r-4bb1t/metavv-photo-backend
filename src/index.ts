@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { upload } from './upload';
-
+import { Game, Photo, Comment } from './entities/game';
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -41,6 +41,25 @@ app.get('/', async (req: Request, res: Response) => {
 
 app.post('/upload', upload.single('image'), async (req, res) => {
   res.send({ url: (req.file as any).location });
+});
+
+//게임 참여
+app.post('/:gameId', async (req: Request, res: Response) => {
+  try {
+    //대충 req.body.name으로 유저 찾기
+
+    const game = AppDataSource.getRepository(Game)
+      .createQueryBuilder('game')
+      .where('game.id = :gameId', { gameId: req.params.gameId })
+      .leftJoinAndSelect('game.photos', 'photos')
+      .getOne();
+
+    if (!game) return res.send(404);
+
+    // for(let i = 0; i<game.photos.length; i++)
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 const PORT = 4000;
