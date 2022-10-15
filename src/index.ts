@@ -56,21 +56,15 @@ try {
 
 app.post('/new', async (req: Request, res: Response) => {
   try {
-    const game = await AppDataSource.getRepository(Game).create({ title: req.body.title });
+    const game = await AppDataSource.getRepository(Game).create({
+      title: req.body.title,
+      standard: req.body.standard,
+      isPublic: req.body.isPublic,
+      tags: req.body.tags,
+      password: req.body.password,
+      photos: req.body.photos
+    });
     const result = await AppDataSource.getRepository(Game).save(game);
-
-    await Promise.all(
-      req.body.questions.map(async (question: Question) => {
-        const q = await AppDataSource.getRepository(Question).create({
-          content: question.content,
-          options: JSON.stringify(question.options),
-          game: result,
-          index: question.index,
-          count: 0,
-        });
-        await AppDataSource.getRepository(Question).save(q);
-      }),
-    );
 
     return res.send(result);
   } catch (e) {
