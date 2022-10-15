@@ -43,17 +43,17 @@ app.get('/', async (req: Request, res: Response) => {
 
 app.get('/game/:gameId/result', async(req: Request, res: Response) => {
   try {
-    const result = await AppDataSource.getRepository(Game)
-        .createQueryBuilder('result')
+    const game = await AppDataSource.getRepository(Game)
+        .createQueryBuilder('game')
         .where('game.id == :id', { id: req.params.gameId})
         .andWhere('game.password == :password', { password: req.query.password})
         .leftJoinAndSelect('game.photos', 'photos')
         .getOne();
 
-    if (!result) return res.send(404);
+    if (!game) return res.send(404);
     
     return res.send({
-        photos: result.photos.map((photo) => {
+        photos: game.photos.map((photo) => {
             return {
                 score: photo.id,
                 comment: photo.comments.map((comment) => {
