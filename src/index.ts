@@ -158,6 +158,7 @@ app.post('/:gameId', async (req: Request, res: Response) => {
     return res.send({
       photos: game.photos.map((photo) => {
         return {
+          id: photo.id,
           score: photo.score,
           comment: photo.comments.map((comment) => {
             return {
