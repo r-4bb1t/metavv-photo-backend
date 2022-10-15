@@ -55,7 +55,7 @@ app.get('/game/:gameId/result', async(req: Request, res: Response) => {
     return res.send({
         photos: game.photos.map((photo) => {
             return {
-                score: photo.id,
+                score: photo.score,
                 comment: photo.comments.map((comment) => {
                   return {
                     content: comment.content,
