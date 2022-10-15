@@ -40,6 +40,37 @@ app.get('/', async (req: Request, res: Response) => {
   res.send(200);
 });
 
+app.post('/new', upload.array('files'), async (req: Request, res: Response) => {
+  try {
+    const game = await AppDataSource.getRepository(Game).create({
+      title: req.body.title,
+      standard: req.body.standard,
+      isPublic: req.body.isPublic,
+      tags: req.body.tags,
+      password: req.body.password,
+      photos: [],
+    });
+    const result = await AppDataSource.getRepository(Game).save(game);
+
+    const urls = (req.files as Express.MulterS3.File[])?.map((file) => file.location);
+
+    await Promise.all(
+      urls.map(async (url: string) => {
+        const p = await AppDataSource.getRepository(Photo).create({
+          game: result,
+          img: url,
+          score: 0,
+          comments: [],
+        });
+        await AppDataSource.getRepository(Photo).save(p);
+      }),
+    );
+
+    return res.send(result);
+  } catch (e) {
+    console.log(e);
+  }
+});
 
 app.get('/game/:gameId/result', async(req: Request, res: Response) => {
   try {
@@ -68,10 +99,6 @@ app.get('/game/:gameId/result', async(req: Request, res: Response) => {
 } catch (e) {
     console.log(e);
 }
-});
-
-app.post('/upload', upload.single('image'), async (req, res) => {
-  res.send({ url: (req.file as any).location });
 });
 
 app.post('/:photoId/comment', async (req: Request, res: Response) => {
@@ -138,21 +165,3 @@ try {
 } catch (error: any) {
   console.error(`Error occured: ${error.message}`);
 }
-
-app.post('/new', async (req: Request, res: Response) => {
-  try {
-    const game = await AppDataSource.getRepository(Game).create({
-      title: req.body.title,
-      standard: req.body.standard,
-      isPublic: req.body.isPublic,
-      tags: req.body.tags,
-      password: req.body.password,
-      photos: req.body.photos
-    });
-    const result = await AppDataSource.getRepository(Game).save(game);
-
-    return res.send(result);
-  } catch (e) {
-    console.log(e);
-  }
-});
