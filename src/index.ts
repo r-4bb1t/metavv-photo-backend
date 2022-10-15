@@ -86,9 +86,10 @@ app.get('/:gameId/result', async (req: Request, res: Response) => {
   try {
     const game = await AppDataSource.getRepository(Game)
       .createQueryBuilder('game')
-      .where('game.id == :id', { id: req.params.gameId })
-      .andWhere('game.password == :password', { password: req.query.password })
+      .where('game.id = :id', { id: req.params.gameId })
+      .andWhere('game.password = :password', { password: req.query.password })
       .leftJoinAndSelect('game.photos', 'photos')
+      .leftJoinAndSelect('photos.comments', 'comments')
       .getOne();
 
     if (!game) return res.send(404);
@@ -96,6 +97,7 @@ app.get('/:gameId/result', async (req: Request, res: Response) => {
     return res.send({
       photos: game.photos.map((photo) => {
         return {
+          id: photo.id,
           score: photo.score,
           comment: photo.comments.map((comment) => {
             return {
@@ -108,7 +110,6 @@ app.get('/:gameId/result', async (req: Request, res: Response) => {
     });
   } catch (e) {
     console.log(e);
-    return res.send(400).json({ message: e });
   }
 });
 
@@ -127,7 +128,6 @@ app.post('/:photoId/comment', async (req: Request, res: Response) => {
     return res.send(result);
   } catch (e) {
     console.log(e);
-    return res.send(400).json({ message: e });
   }
 });
 
@@ -174,7 +174,6 @@ app.post('/:gameId', async (req: Request, res: Response) => {
     });
   } catch (e) {
     console.log(e);
-    return res.send(400).json({ message: e });
   }
 });
 
