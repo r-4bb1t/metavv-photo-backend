@@ -141,31 +141,39 @@ app.post('/:gameId', async (req: Request, res: Response) => {
       .createQueryBuilder('game')
       .where('game.id = :gameId', { gameId: req.params.gameId })
       .leftJoinAndSelect('game.photos', 'photos')
+      .leftJoinAndSelect('photos.comments', 'comments')
       .getOne();
 
     if (!game) return res.send(404);
-    if (game) {
-      for (let i = 0; i < game.photos.length; i++) {
-        Object.keys(req.body.photos).map(
-          (photoId) =>
-            (game.photos.filter((p) => p.id === parseInt(photoId))[0].score += req.body.photos[photoId].score),
-        );
-      }
 
-      return res.send({
-        photos: game.photos.map((photo) => {
-          return {
-            score: photo.score,
-            comment: photo.comments.map((comment) => {
-              return {
-                content: comment.content,
-                name: comment.name,
-              };
-            }),
-          };
-        }),
-      });
-    }
+    Promise.all(
+      Object.keys(req.body.photos).map(async (photoId) => {
+        try {
+          const photo = await AppDataSource.getRepository(Photo)
+            .createQueryBuilder('photo')
+            .where('photo.id = :photoId', { photoId })
+            .getOneOrFail();
+          photo.score += req.body.photos[photoId];
+          await AppDataSource.getRepository(Photo).save(photo);
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    return res.send({
+      photos: game.photos.map((photo) => {
+        return {
+          score: photo.score,
+          comment: photo.comments.map((comment) => {
+            return {
+              content: comment.content,
+              name: comment.name,
+            };
+          }),
+        };
+      }),
+    });
   } catch (e) {
     console.log(e);
   }
