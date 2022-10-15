@@ -61,10 +61,10 @@ export class Comment {
   name!: string;
 
   @Column({ nullable: true, type: 'int' }) //아니면 Comment 엔티티 자체를 저장할 수도?
-  parentCommentId: number;
+  parentCommentId!: number;
 
   @Column({ nullable: true, type: 'int' }) //아니면 Comment 엔티티 자체를 저장할 수도?
-  childrenCommentId: number;
+  childrenCommentId!: number;
 
   @Column('boolean')
   isCreator!: boolean;
