@@ -137,15 +137,43 @@ app.post('/:photoId/comment', async (req: Request, res: Response) => {
 //게임 참여
 app.post('/:gameId', async (req: Request, res: Response) => {
   try {
-    //대충 req.body.name으로 유저 찾기
-
     const game = await AppDataSource.getRepository(Game)
       .createQueryBuilder('game')
       .where('game.id = :gameId', { gameId: req.params.gameId })
       .leftJoinAndSelect('game.photos', 'photos')
+      .leftJoinAndSelect('photos.comments', 'comments')
       .getOne();
+
     if (!game) return res.send(404);
-    if (game.photos.length) for (let i = 0; i < game.photos.length; i++) {}
+
+    Promise.all(
+      Object.keys(req.body.photos).map(async (photoId) => {
+        try {
+          const photo = await AppDataSource.getRepository(Photo)
+            .createQueryBuilder('photo')
+            .where('photo.id = :photoId', { photoId })
+            .getOneOrFail();
+          photo.score += req.body.photos[photoId];
+          await AppDataSource.getRepository(Photo).save(photo);
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    return res.send({
+      photos: game.photos.map((photo) => {
+        return {
+          score: photo.score,
+          comment: photo.comments.map((comment) => {
+            return {
+              content: comment.content,
+              name: comment.name,
+            };
+          }),
+        };
+      }),
+    });
   } catch (e) {
     console.log(e);
   }
