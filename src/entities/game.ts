@@ -12,7 +12,7 @@ export class Game {
   standard!: string;
 
   @Column('text')
-  tags!: string;
+  tags!: string[];
 
   @Column('int')
   password!: number;
