@@ -40,34 +40,33 @@ app.get('/', async (req: Request, res: Response) => {
   res.send(200);
 });
 
-
-app.get('/game/:gameId/result', async(req: Request, res: Response) => {
+app.get('/game/:gameId/result', async (req: Request, res: Response) => {
   try {
     const game = await AppDataSource.getRepository(Game)
-        .createQueryBuilder('game')
-        .where('game.id == :id', { id: req.params.gameId})
-        .andWhere('game.password == :password', { password: req.query.password})
-        .leftJoinAndSelect('game.photos', 'photos')
-        .getOne();
+      .createQueryBuilder('game')
+      .where('game.id == :id', { id: req.params.gameId })
+      .andWhere('game.password == :password', { password: req.query.password })
+      .leftJoinAndSelect('game.photos', 'photos')
+      .getOne();
 
     if (!game) return res.send(404);
-    
+
     return res.send({
-        photos: game.photos.map((photo) => {
+      photos: game.photos.map((photo) => {
+        return {
+          score: photo.score,
+          comment: photo.comments.map((comment) => {
             return {
-                score: photo.score,
-                comment: photo.comments.map((comment) => {
-                  return {
-                    content: comment.content,
-                    name: comment.name,
-                  };
-                }),
+              content: comment.content,
+              name: comment.name,
             };
-        }),
+          }),
+        };
+      }),
     });
-} catch (e) {
+  } catch (e) {
     console.log(e);
-}
+  }
 });
 
 app.post('/upload', upload.single('image'), async (req, res) => {
@@ -77,7 +76,6 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 //게임 참여
 app.post('/:gameId', async (req: Request, res: Response) => {
   try {
-    //대충 req.body.name으로 유저 찾기
     const game = await AppDataSource.getRepository(Game)
       .createQueryBuilder('game')
       .where('game.id = :gameId', { gameId: req.params.gameId })
@@ -85,35 +83,31 @@ app.post('/:gameId', async (req: Request, res: Response) => {
       .getOne();
 
     if (!game) return res.send(404);
-    if (game){
-      for (let i = 0; i < game.photos.length; i++)
-        {Object.keys(req.body.photos).map((photoId)=>game.photos.filter((p)=>p.id===photoId)[0].score += req.body.photos[photoId].score)
+    if (game) {
+      for (let i = 0; i < game.photos.length; i++) {
+        Object.keys(req.body.photos).map(
+          (photoId) =>
+            (game.photos.filter((p) => p.id === parseInt(photoId))[0].score += req.body.photos[photoId].score),
+        );
       }
-    
+
       return res.send({
         photos: game.photos.map((photo) => {
-            return {
-                score: photo.score,
-                comment: photo.comments.map((comment) => {
-                  return {
-                    content: comment.content,
-                    name: comment.name,
-                  };
-                }),
-            };
+          return {
+            score: photo.score,
+            comment: photo.comments.map((comment) => {
+              return {
+                content: comment.content,
+                name: comment.name,
+              };
+            }),
+          };
         }),
-    });}
-  } catch (e){
+      });
+    }
+  } catch (e) {
     console.log(e);
   }
-
-  
-  // reqest 배열 형태{[photo :1] : 10(점), [2] : 8, [3] : 2, [4] : 5......} 
-  Object.keys(req.body.photos).map((photoId)=>{ 
-    req.body.photos[photoId]
-})
-
-
 });
 
 const PORT = 4000;
@@ -134,7 +128,7 @@ app.post('/new', async (req: Request, res: Response) => {
       isPublic: req.body.isPublic,
       tags: req.body.tags,
       password: req.body.password,
-      photos: req.body.photos
+      photos: req.body.photos,
     });
     const result = await AppDataSource.getRepository(Game).save(game);
 
