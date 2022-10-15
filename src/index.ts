@@ -128,21 +128,6 @@ app.post('/:photoId/comment', async (req: Request, res: Response) => {
   }
 });
 
-// const comment = await AppDataSource.getRepository(Comment)
-// .createQueryBuilder('photo')
-// .where('photo.id == id', {id: req.params.photoId})
-// .leftJoinAndSelect('photo.comment', 'comment')
-// .getOne()
-
-// .createQueryBuilder('comment')
-// .where('comment.id like :id', {id: `%${req.params.id}%`})
-// .andWhere ('comment.content like :content', {content: `%${req.body.content}%`})
-// .andWhere ('comment.name like :name', {name: `%${req.body.name}%`})
-// .andWhere ('comment.parentComment like :parentComment', {parentComment: `%${req.body.parentComment}%`})
-// .andWhere ('comment.childrenComment like :childrenComment', {childrenComment: `%${req.body.childrenComment}%`})
-// .andWhere ('comment.isCreator like :isCreator', {isCreator: `%${req.body.isCreator}%`})
-// .andWhere ('comment.onlyCreator like :onlyCreator', {onlyCreator: `%${req.body.isCreator}%`})
-
 //게임 참여
 app.post('/:gameId', async (req: Request, res: Response) => {
   try {
@@ -155,7 +140,7 @@ app.post('/:gameId', async (req: Request, res: Response) => {
 
     if (!game) return res.send(404);
 
-    Promise.all(
+    await Promise.all(
       Object.keys(req.body.photos).map(async (photoId) => {
         try {
           const photo = await AppDataSource.getRepository(Photo)
