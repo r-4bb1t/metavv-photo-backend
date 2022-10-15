@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { upload } from './upload';
+import { Game, Photo } from './game';
 
 dotenv.config();
 
@@ -52,3 +53,27 @@ try {
 } catch (error: any) {
   console.error(`Error occured: ${error.message}`);
 }
+
+app.post('/new', async (req: Request, res: Response) => {
+  try {
+    const game = await AppDataSource.getRepository(Game).create({ title: req.body.title });
+    const result = await AppDataSource.getRepository(Game).save(game);
+
+    await Promise.all(
+      req.body.questions.map(async (question: Question) => {
+        const q = await AppDataSource.getRepository(Question).create({
+          content: question.content,
+          options: JSON.stringify(question.options),
+          game: result,
+          index: question.index,
+          count: 0,
+        });
+        await AppDataSource.getRepository(Question).save(q);
+      }),
+    );
+
+    return res.send(result);
+  } catch (e) {
+    console.log(e);
+  }
+});
