@@ -1,4 +1,3 @@
-import { File } from 'aws-sdk/clients/codecommit';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne } from 'typeorm';
 
 @Entity('game')
@@ -58,7 +57,7 @@ export class Comment {
   parentComment: Comment;
 
   @OneToMany(() => Comment, (comment) => comment.parentComment)
-  childrenComment: Comment;
+  childrenComment: Comment[];
 
   @Column('boolean')
   isCreator!: boolean;

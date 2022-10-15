@@ -48,15 +48,13 @@ app.post('/:gameId', async (req: Request, res: Response) => {
   try {
     //대충 req.body.name으로 유저 찾기
 
-    const game = AppDataSource.getRepository(Game)
+    const game = await AppDataSource.getRepository(Game)
       .createQueryBuilder('game')
       .where('game.id = :gameId', { gameId: req.params.gameId })
       .leftJoinAndSelect('game.photos', 'photos')
       .getOne();
-
     if (!game) return res.send(404);
-
-    // for(let i = 0; i<game.photos.length; i++)
+    if (game.photos.length) for (let i = 0; i < game.photos.length; i++) {}
   } catch (e) {
     console.log(e);
   }
