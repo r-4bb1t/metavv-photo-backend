@@ -6,7 +6,6 @@ import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { upload } from './upload';
 import { Game, Photo, Comment } from './entities/game';
-import multerS3 from 'multer-s3';
 
 dotenv.config();
 
@@ -39,6 +38,38 @@ app.use(bodyParser.json());
 
 app.get('/', async (req: Request, res: Response) => {
   res.send(200);
+});
+
+app.post('/new', upload.array('files'), async (req: Request, res: Response) => {
+  try {
+    const game = await AppDataSource.getRepository(Game).create({
+      title: req.body.title,
+      standard: req.body.standard,
+      isPublic: req.body.isPublic,
+      tags: req.body.tags,
+      password: req.body.password,
+      photos: [],
+    });
+    const result = await AppDataSource.getRepository(Game).save(game);
+
+    const urls = (req.files as Express.MulterS3.File[])?.map((file) => file.location);
+
+    await Promise.all(
+      urls.map(async (url: string) => {
+        const p = await AppDataSource.getRepository(Photo).create({
+          game: result,
+          img: url,
+          score: 0,
+          comments: [],
+        });
+        await AppDataSource.getRepository(Photo).save(p);
+      }),
+    );
+
+    return res.send(result);
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 app.get('/game/:gameId/result', async (req: Request, res: Response) => {
@@ -96,34 +127,3 @@ try {
 } catch (error: any) {
   console.error(`Error occured: ${error.message}`);
 }
-
-app.post('/new', upload.array('image'), async (req: Request, res: Response) => {
-  try {
-    const game = await AppDataSource.getRepository(Game).create({
-      title: req.body.title,
-      standard: req.body.standard,
-      isPublic: req.body.isPublic,
-      tags: req.body.tags,
-      password: req.body.password,
-    });
-    const result = await AppDataSource.getRepository(Game).save(game);
-
-    const urls = (req.files as Express.MulterS3.File[])?.map((file) => file.location);
-
-    await Promise.all(
-      urls.map(async (url: string) => {
-        const p = await AppDataSource.getRepository(Photo).create({
-          game: result,
-          img: url,
-          score: 0,
-          comments: [],
-        });
-        await AppDataSource.getRepository(Photo).save(p);
-      }),
-    );
-
-    return res.send(result);
-  } catch (e) {
-    console.log(e);
-  }
-});
