@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { upload } from './upload';
+import { Game } from './entities/game';
 
 dotenv.config();
 
@@ -37,6 +38,36 @@ app.use(bodyParser.json());
 
 app.get('/', async (req: Request, res: Response) => {
   res.send(200);
+});
+
+
+app.get('/game/:gameId/result', async(req: Request, res: Response) => {
+  try {
+    const result = await AppDataSource.getRepository(Game)
+        .createQueryBuilder('result')
+        .where('game.id == :id', { id: req.params.gameId})
+        .andWhere('game.password == :password', { password: req.query.password})
+        .leftJoinAndSelect('game.photos', 'photos')
+        .getOne();
+
+    if (!result) return res.send(404);
+    
+    return res.send({
+        photos: result.photos.map((photo) => {
+            return {
+                score: photo.id,
+                comment: photo.comments.map((comment) => {
+                  return {
+                    content: comment.content,
+                    name: comment.name,
+                  };
+                }),
+            };
+        }),
+    });
+} catch (e) {
+    console.log(e);
+}
 });
 
 app.post('/upload', upload.single('image'), async (req, res) => {
