@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Photo } from './photo';
 
 @Entity('game')
 export class Game {
@@ -11,8 +12,8 @@ export class Game {
   @Column('text')
   standard!: string;
 
-  @Column('text', { array: true })
-  tags!: string[];
+  @Column('simple-array')
+  tags: string[];
 
   @Column('int')
   password!: number;
@@ -22,49 +23,4 @@ export class Game {
 
   @OneToMany(() => Photo, (photo) => photo.game)
   photos!: Photo[];
-}
-
-@Entity('photo')
-export class Photo {
-  @PrimaryGeneratedColumn('increment')
-  id!: number;
-
-  @Column('text')
-  img!: string;
-
-  @Column('int')
-  score!: number;
-
-  @ManyToOne(() => Game, (game) => game.photos)
-  game!: Game;
-
-  @OneToMany(() => Comment, (comment) => comment.photo)
-  comments!: Comment[];
-}
-
-@Entity('comment')
-export class Comment {
-  @PrimaryGeneratedColumn('increment')
-  id!: number;
-
-  @Column('text')
-  content!: string;
-
-  @Column('text')
-  name!: string;
-
-  @ManyToOne(() => Comment, (comment) => comment.childrenComment, { nullable: true })
-  parentComment!: Comment;
-
-  @OneToMany(() => Comment, (comment) => comment.parentComment, { nullable: true })
-  childrenComment!: Comment[];
-
-  @Column('boolean')
-  isCreator!: boolean;
-
-  @Column('boolean')
-  onlyCreator!: boolean;
-
-  @ManyToOne(() => Photo, (photo) => photo.comments)
-  photo!: Photo;
 }
